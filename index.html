@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flute Scale Studio</title>
+<meta name="description" content="Learn flute scales, pentatonics and arpeggios in every key with fingerings, notation, a metronome, a drone and a tuner.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Flute Scale Studio</p>
+      <h1 id="keyTitle">C major</h1>
+    </div>
+    <div class="seg" role="group" aria-label="Major or minor">
+      <button type="button" id="tonMajor" data-tonality="major" aria-pressed="true">Major</button>
+      <button type="button" id="tonMinor" data-tonality="minor" aria-pressed="false">Minor</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="col">
+      <div class="panel">
+        <div class="keys" id="keyGrid" role="group" aria-label="Key"></div>
+
+        <div class="sig">
+          <div class="sig-text">
+            <p class="label">Key signature</p>
+            <p class="sig-main" id="sigMain">No sharps or flats</p>
+            <p class="sig-sub" id="sigSub">Relative minor: A minor</p>
+          </div>
+          <button type="button" class="play" id="playBtn" aria-label="Play">
+            <span class="play-disc" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="24" height="24"><path id="playIcon" d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>
+            </span>
+            <span id="playLabel">Play</span>
+          </button>
+        </div>
+
+        <div class="seg seg-wide" role="group" aria-label="Pattern" id="modeSeg">
+          <button type="button" id="modeScale" data-mode="scale" aria-pressed="true">Scale</button>
+          <button type="button" id="modePenta" data-mode="pentatonic" aria-pressed="false">Pentatonic</button>
+          <button type="button" id="modeArp" data-mode="arpeggio" aria-pressed="false">Arpeggio</button>
+        </div>
+
+        <div class="chips" id="chips" aria-label="Notes in this pattern"></div>
+
+        <div class="controls">
+          <button type="button" class="pill" id="octBtn" aria-label="Octaves">1 octave</button>
+          <button type="button" class="pill" id="metBtn" aria-pressed="true">Metronome</button>
+          <button type="button" class="pill" id="loopBtn" aria-pressed="false">Loop</button>
+          <div class="tempo">
+            <button type="button" class="round" id="bpmDown" aria-label="Slower">−</button>
+            <output id="bpmOut" for="bpmDown bpmUp">80 BPM</output>
+            <button type="button" class="round" id="bpmUp" aria-label="Faster">+</button>
+          </div>
+        </div>
+
+        <div class="row-toggle">
+          <div>
+            <p class="row-title">Drone</p>
+            <p class="row-sub" id="droneSub">Holds C to play in tune against</p>
+          </div>
+          <button type="button" class="switch" id="droneBtn" role="switch" aria-checked="false" aria-label="Drone"><span></span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="col">
+      <div class="panel note-panel">
+        <div class="note-head">
+          <div>
+            <p class="label" id="degreeLabel">Degree I</p>
+            <p class="note-name" id="noteName">C</p>
+          </div>
+          <div class="note-actions">
+            <button type="button" class="pill" id="altBtn" hidden>Swap</button>
+            <button type="button" class="pill" id="hearBtn">Hear it</button>
+          </div>
+        </div>
+        <div class="flute" id="fluteDiagram"></div>
+        <dl class="hands">
+          <div><dt>Left hand</dt><dd id="leftText">thumb, 1, 2, 3</dd></div>
+          <div><dt>Right hand</dt><dd id="rightText">1, 2, 3</dd></div>
+        </dl>
+        <p class="tip" id="tipText"></p>
+        <div class="stepper">
+          <button type="button" class="pill" id="prevBtn">← Previous</button>
+          <span id="stepCount">1 / 15</span>
+          <button type="button" class="pill" id="nextBtn">Next →</button>
+        </div>
+      </div>
+
+      <div class="panel staff-panel">
+        <p class="label" id="modeBlurb">All seven notes of the key, up and back down</p>
+        <div class="staff-scroll" id="staffScroll"><div id="staff"></div></div>
+      </div>
+
+      <div class="panel">
+        <div class="row-toggle">
+          <div>
+            <p class="row-title">Listen to me</p>
+            <p class="row-sub" id="tunerSub">Uses the microphone to check each note and move on when you play it</p>
+          </div>
+          <button type="button" class="switch" id="micBtn" role="switch" aria-checked="false" aria-label="Listen to me"><span></span></button>
+        </div>
+        <div class="tuner" id="tuner" hidden>
+          <div class="meter" aria-hidden="true">
+            <div class="meter-zone"></div>
+            <div class="meter-mid"></div>
+            <div class="meter-dot" id="meterDot"></div>
+          </div>
+          <div class="meter-scale" aria-hidden="true"><span>flat</span><span>in tune</span><span>sharp</span></div>
+          <p class="tuner-read" id="tunerRead" aria-live="polite">Play the highlighted note</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">Fingerings are for a standard closed-G♯ concert flute with a C foot. Space plays or stops, arrow keys step through the notes.</footer>
+</div>
+
+<script src="js/theory.js"></script>
+<script src="js/fingerings.js"></script>
+<script src="js/glyphs.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/tuner.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
