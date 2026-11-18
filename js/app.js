@@ -1,6 +1,6 @@
 /* UI: state, rendering, and wiring between theory, fingerings, audio and tuner. */
 (function () {
-  const { theory, fingerings, glyphs, audio, tuner } = window.Flute;
+  const { theory, fingerings, glyphs, diagram, audio, tuner } = window.Flute;
   const $ = (id) => document.getElementById(id);
 
   const STORE = 'flute-scale-studio';
@@ -14,6 +14,7 @@
     loop: false,
     drone: false,
     alt: {}, // preferred alternate fingering per pitch class
+    chartReg: 0, // register shown in the fingering chart
   };
   try {
     Object.assign(state, JSON.parse(localStorage.getItem(STORE) || '{}'), { drone: false });
@@ -41,40 +42,73 @@
     return { opts, i, f: opts[i] };
   }
 
-  /* ---------- Flute diagram ---------- */
-  function fluteSvg(k) {
-    const on = (v) => (v ? ' on' : '');
-    const hole = (x, v, n) =>
-      `<circle class="key${on(v)}" cx="${x}" cy="63" r="10.5"/><text class="num${on(v)}" x="${x}" y="66.8">${n}</text>`;
-    const pill = (x, y, w, h, v) =>
-      `<rect class="key${on(v)}" x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="${h / 2}"/>`;
-    const arm = (x, y1, y2) => `<line class="arm" x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"/>`;
-    const cap = (x, y, t) => `<text class="cap" x="${x}" y="${y}">${t}</text>`;
-    const trill = (x, v) =>
-      arm(x, 48, 51) + `<ellipse class="key${on(v)}" cx="${x}" cy="42" rx="4.2" ry="6.2"/>` + cap(x, 31, 'tr');
-    const bracket = (x1, x2, t) =>
-      `<path class="bracket" d="M${x1} 121v4H${x2}v-4"/><text class="group" x="${(x1 + x2) / 2}" y="135">${t}</text>`;
-    return `<svg viewBox="0 22 340 116" role="img" aria-label="Flute fingering diagram">
-      <defs><linearGradient id="tubeGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color:var(--silver-2)"/><stop offset="0.35" style="stop-color:var(--silver-1)"/>
-        <stop offset="1" style="stop-color:var(--silver-2)"/></linearGradient></defs>
-      <rect class="tube" x="6" y="50" width="328" height="26" rx="6" fill="url(#tubeGrad)"/>
-      <rect class="ring" x="46" y="48.5" width="3" height="29" rx="1"/>
-      <rect class="ring" x="262" y="48.5" width="3" height="29" rx="1"/>
-      <ellipse class="key" cx="25" cy="63" rx="12" ry="9.5"/><ellipse class="hole" cx="25" cy="63" rx="4.5" ry="3.2"/>
-      ${arm(78, 76, 88)}${arm(60, 76, 91)}${arm(152, 76, 89)}
-      ${pill(60, 96, 15, 10, k.Tb)}${cap(60, 114, 'B♭')}
-      <circle class="key${on(k.T)}" cx="78" cy="97" r="9"/><text class="num${on(k.T)}" x="78" y="100.8">T</text>
-      ${hole(78, k.L1, 1)}${hole(104, k.L2, 2)}${hole(130, k.L3, 3)}
-      ${pill(152, 95, 20, 11, k.Gs)}${cap(152, 114, 'G♯')}
-      ${arm(168, 47, 51)}${pill(168, 42, 13, 9, k.lev)}${cap(168, 31, 'B♭')}
-      ${hole(186, k.R1, 1)}${trill(199, k.tr1)}${hole(212, k.R2, 2)}${trill(225, k.tr2)}${hole(238, k.R3, 3)}
-      ${arm(282, 76, 89)}${arm(302, 76, 89)}${arm(320, 76, 89)}
-      ${pill(282, 95, 17, 12, k.Eb)}${cap(282, 114, 'E♭')}
-      ${pill(302, 95, 15, 12, k.Cs)}${cap(302, 114, 'C♯')}
-      ${pill(320, 95, 15, 12, k.C)}${cap(320, 114, 'C')}
-      ${bracket(50, 164, 'LEFT HAND')}${bracket(172, 250, 'RIGHT HAND')}${bracket(270, 330, 'PINKY')}
-    </svg>`;
+  /* ---------- Fingering chart ---------- */
+  const LETTERS = 'CDEFGAB';
+  const ACC_SIGN = { '-1': '♭', 0: '', 1: '♯' };
+  // How each pitch class is written in the chart: [letter index, accidental], plus its other name.
+  const CHART_SPELL = [[0, 0], [0, 1], [1, 0], [2, -1], [2, 0], [3, 0], [3, 1], [4, 0], [4, 1], [5, 0], [6, -1], [6, 0]];
+  const ENHARMONIC = { 1: 'D♭', 3: 'D♯', 6: 'G♭', 8: 'A♭', 10: 'A♯' };
+  const REGISTERS = [
+    [60, 71],
+    [72, 83],
+    [84, 96],
+  ];
+
+  function chartNote(midi) {
+    const pc = midi % 12;
+    const [letter, acc] = CHART_SPELL[pc];
+    const octave = Math.floor(midi / 12) - 1;
+    return { midi, acc, octave, pos: (octave - 4) * 7 + letter - 2, name: LETTERS[letter] + ACC_SIGN[acc], other: ENHARMONIC[pc] };
+  }
+
+  /** A small treble staff holding one whole note. lo/hi are the staff steps the drawing must cover. */
+  function miniStaff(n, lo, hi) {
+    const step = 3;
+    const pad = 3;
+    const w = 52;
+    const nx = 38;
+    const y = (pos) => (hi - pos) * step + pad;
+    const h = (hi - lo) * step + pad * 2;
+    const k = (2 * step) / 250; // glyph units per staff space
+    const ny = y(n.pos);
+    let s = `<svg class="mini-staff" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true">`;
+    for (let l = 0; l <= 8; l += 2) s += `<line class="line" x1="0" x2="${w}" y1="${y(l)}" y2="${y(l)}"/>`;
+    for (let p = -2; p >= n.pos; p -= 2) s += `<line class="line" x1="${nx - 7}" x2="${nx + 7}" y1="${y(p)}" y2="${y(p)}"/>`;
+    for (let p = 10; p <= n.pos; p += 2) s += `<line class="line" x1="${nx - 7}" x2="${nx + 7}" y1="${y(p)}" y2="${y(p)}"/>`;
+    s += `<use href="#g-clef" class="ink" transform="translate(1 ${y(0)}) scale(${k} ${-k})"/>`;
+    if (n.acc > 0) s += `<use href="#g-sharp" class="ink" transform="translate(${nx - 13} ${ny + 3.1}) scale(${k} ${-k})"/>`;
+    if (n.acc < 0) s += `<use href="#g-flat" class="ink" transform="translate(${nx - 12} ${ny + 2.4}) scale(${k} ${-k})"/>`;
+    s += `<ellipse class="ink" cx="${nx}" cy="${ny}" rx="4.3" ry="3"/>`;
+    s += `<ellipse class="whole-in" cx="${nx}" cy="${ny}" rx="2.1" ry="1.6" transform="rotate(-40 ${nx} ${ny})"/>`;
+    return s + '</svg>';
+  }
+
+  function renderChart() {
+    const [a, b] = REGISTERS[state.chartReg] || REGISTERS[0];
+    const notes = [];
+    for (let m = a; m <= b; m++) notes.push(chartNote(m));
+    const lo = Math.min(-3.6, Math.min.apply(null, notes.map((n) => n.pos)) - 1.5);
+    const hi = Math.max(11.1, Math.max.apply(null, notes.map((n) => n.pos)) + 1.5);
+    $('chartGrid').innerHTML = notes
+      .map((n) => {
+        const opts = fingerings.options(n.midi);
+        const flutes = opts
+          .map((o) => {
+            const d = fingerings.describe(o.keys);
+            const name = opts.length > 1 ? `<span class="fc-opt-name">${o.label}</span>` : '';
+            const label = (opts.length > 1 ? o.label + ': ' : '') + 'left hand ' + d.left + '; right hand ' + d.right;
+            return `<span class="fc-opt">${name}${diagram.flute(o.keys, { compact: true, label })}</span>`;
+          })
+          .join('');
+        const other = n.other ? `<span class="fc-other">${n.other}<sub>${n.octave}</sub></span>` : '';
+        return (
+          `<button type="button" class="fc" data-midi="${n.midi}">` +
+          `<span class="fc-note">${miniStaff(n, lo, hi)}<span class="fc-name">${n.name}<sub>${n.octave}</sub></span>${other}</span>` +
+          `<span class="fc-opts">${flutes}</span></button>`
+        );
+      })
+      .join('');
+    document.querySelectorAll('[data-reg]').forEach((btn) => btn.setAttribute('aria-pressed', +btn.dataset.reg === state.chartReg));
   }
 
   function miniDots(k) {
@@ -184,8 +218,10 @@
     const { opts, i, f } = fingeringFor(n.midi);
     $('degreeLabel').textContent = 'Degree ' + n.roman + ' · octave ' + n.octave;
     $('noteName').textContent = n.name;
-    $('fluteDiagram').innerHTML = fluteSvg(f.keys);
     const d = fingerings.describe(f.keys);
+    $('fluteDiagram').innerHTML = diagram.flute(f.keys, {
+      label: 'Fingering for ' + n.name + n.octave + ': left hand ' + d.left + '; right hand ' + d.right,
+    });
     $('leftText').textContent = d.left;
     $('rightText').textContent = d.right;
     $('tipText').textContent = fingerings.tip(n.midi);
@@ -379,6 +415,21 @@
   $('prevBtn').addEventListener('click', () => go(current - 1, true));
   $('nextBtn').addEventListener('click', () => go(current + 1, true));
   $('micBtn').addEventListener('click', toggleMic);
+  document.querySelectorAll('[data-reg]').forEach((b) =>
+    b.addEventListener('click', () => {
+      state.chartReg = +b.dataset.reg;
+      save();
+      renderChart();
+    })
+  );
+  $('chartGrid').addEventListener('click', (e) => {
+    const card = e.target.closest('.fc');
+    if (!card) return;
+    audio.single(theory.midiToFreq(+card.dataset.midi), 1);
+    card.classList.remove('ringing');
+    void card.offsetWidth; // restart the flash
+    card.classList.add('ringing');
+  });
 
   document.addEventListener('keydown', (e) => {
     if (e.target.closest('input, textarea, select')) return;
@@ -391,4 +442,5 @@
   });
 
   rebuild();
+  renderChart();
 })();

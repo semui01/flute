@@ -83,6 +83,7 @@
           </div>
         </div>
         <div class="flute" id="fluteDiagram"></div>
+        <p class="legend" aria-hidden="true"><span class="sw sw-on"></span>Press <span class="sw"></span>Leave open</p>
         <dl class="hands">
           <div><dt>Left hand</dt><dd id="leftText">thumb, 1, 2, 3</dd></div>
           <div><dt>Right hand</dt><dd id="rightText">1, 2, 3</dd></div>
@@ -121,12 +122,29 @@
     </section>
   </main>
 
+  <section class="panel chart" aria-labelledby="chartTitle">
+    <div class="chart-head">
+      <div>
+        <p class="label">Fingering chart</p>
+        <h2 class="chart-title" id="chartTitle">Every note from low C to high C</h2>
+        <p class="row-sub">Tap a note to hear it. Notes with more than one fingering show each option.</p>
+      </div>
+      <div class="seg" role="group" aria-label="Register" id="regSeg">
+        <button type="button" id="reg0" data-reg="0" aria-pressed="true">Low</button>
+        <button type="button" id="reg1" data-reg="1" aria-pressed="false">Middle</button>
+        <button type="button" id="reg2" data-reg="2" aria-pressed="false">High</button>
+      </div>
+    </div>
+    <div class="chart-grid" id="chartGrid"></div>
+  </section>
+
   <footer class="foot">Fingerings are for a standard closed-G♯ concert flute with a C foot. Space plays or stops, arrow keys step through the notes.</footer>
 </div>
 
 <script src="js/theory.js"></script>
 <script src="js/fingerings.js"></script>
 <script src="js/glyphs.js"></script>
+<script src="js/diagram.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/tuner.js"></script>
 <script src="js/app.js"></script>

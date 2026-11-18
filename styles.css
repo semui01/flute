@@ -12,6 +12,10 @@
   --silver-1: #fbfcfd;
   --silver-2: #c5ced7;
   --silver-3: #8995a1;
+  --silver-mid: #e1e7ec;
+  --hole: #2a343d;
+  --press: #c8323c;
+  --press-edge: #8e1b23;
   --good: #1c7f47;
   --warn: #a94f1c;
   --shadow: 0 1px 2px rgba(21, 32, 42, 0.06), 0 8px 24px rgba(21, 32, 42, 0.06);
@@ -32,6 +36,10 @@
     --silver-1: #e3e9ee;
     --silver-2: #8a97a4;
     --silver-3: #55626f;
+    --silver-mid: #c3ccd4;
+    --hole: #0b1014;
+    --press: #ff5a63;
+    --press-edge: #b3262f;
     --good: #62d394;
     --warn: #f0a46c;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
@@ -51,6 +59,10 @@
   --silver-1: #e3e9ee;
   --silver-2: #8a97a4;
   --silver-3: #55626f;
+  --silver-mid: #c3ccd4;
+  --hole: #0b1014;
+  --press: #ff5a63;
+  --press-edge: #b3262f;
   --good: #62d394;
   --warn: #f0a46c;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
@@ -195,18 +207,35 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 40px; line-h
 .note-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .note-name { font-family: var(--font-display); font-size: 76px; line-height: 0.95; }
 .note-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
-.flute svg { display: block; width: 100%; height: auto; }
-.flute .tube { stroke: var(--silver-3); stroke-width: 1; }
-.flute .ring { fill: var(--silver-3); }
-.flute .key { fill: var(--surface); stroke: var(--silver-3); stroke-width: 1.5; transition: fill 0.1s; }
-.flute .key.on { fill: var(--accent); stroke: var(--accent); }
-.flute .num { font: 600 10.5px var(--font-ui); fill: var(--muted); text-anchor: middle; pointer-events: none; }
-.flute .num.on { fill: var(--accent-ink); }
-.flute .cap { font: 600 8.5px var(--font-ui); fill: var(--muted); text-anchor: middle; }
-.flute .group { font: 700 7.5px var(--font-ui); fill: var(--muted); text-anchor: middle; letter-spacing: 0.1em; }
-.flute .bracket { stroke: var(--line); stroke-width: 1.2; fill: none; }
-.flute .arm { stroke: var(--silver-3); stroke-width: 2; }
-.flute .hole { fill: var(--bg); stroke: var(--silver-3); }
+.flute { margin-inline: -4px; overflow: hidden; }
+/* On narrow screens, crop the plain head joint so the keys get the room. */
+@media (max-width: 520px) {
+  .flute .fl { width: calc(100% * 480 / 394); margin-left: calc(-100% * 86 / 394); }
+}
+.fl { display: block; width: 100%; height: auto; overflow: visible; }
+.fl-compact { overflow: hidden; }
+.fl .fl-tube, .fl .fl-metal { fill: url(#fl-tube-g); stroke: var(--silver-3); stroke-width: 0.8; }
+.fl .fl-ring { fill: var(--silver-2); stroke: var(--silver-3); stroke-width: 0.8; }
+.fl .fl-plate { fill: url(#fl-key-g); stroke: var(--silver-3); stroke-width: 0.8; }
+.fl .fl-emb { fill: var(--hole); }
+.fl .fl-rod { fill: var(--silver-2); stroke: var(--silver-3); stroke-width: 0.6; }
+.fl .fl-post, .fl .fl-arm { fill: var(--silver-3); }
+.fl .fl-cup { fill: var(--silver-2); stroke: var(--silver-3); stroke-width: 0.8; }
+.fl .fl-key { fill: url(#fl-key-g); stroke: var(--silver-3); stroke-width: 1; }
+.fl .fl-key.on { fill: var(--press); stroke: var(--press-edge); }
+.fl .fl-rim { fill: none; stroke: var(--silver-3); stroke-opacity: 0.45; stroke-width: 0.7; }
+.fl .fl-rim.on { stroke: var(--press-edge); stroke-opacity: 0.8; }
+.fl .fl-perf { fill: var(--hole); stroke: var(--silver-3); stroke-width: 0.7; }
+.fl .fl-perf.on { fill: var(--press-edge); stroke: none; }
+.fl .fl-roll { stroke: var(--silver-3); stroke-width: 0.7; }
+.fl .fl-roll.on { stroke: var(--press-edge); }
+.fl .fl-lbl { font: 600 10.5px var(--font-ui); fill: var(--muted); }
+.fl .fl-num { font: 700 11.5px var(--font-ui); fill: var(--muted); }
+.fl .fl-grp { font: 700 9px var(--font-ui); fill: var(--muted); letter-spacing: 0.12em; }
+.legend { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); margin-top: -8px; }
+.sw { width: 12px; height: 12px; border-radius: 50%; background: var(--silver-mid); border: 1px solid var(--silver-3); }
+.sw-on { background: var(--press); border-color: var(--press-edge); }
+.legend .sw:not(:first-child) { margin-left: 10px; }
 .hands { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .hands dd { font-weight: 600; margin-top: 2px; }
 .tip { color: var(--muted); max-width: 60ch; }
@@ -237,6 +266,38 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 40px; line-h
 .meter-dot.good { background: var(--good); }
 .meter-scale { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .tuner-read { font-weight: 600; min-height: 1.4em; }
+
+/* Fingering chart */
+.chart-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 16px; flex-wrap: wrap; }
+.chart-title { font-family: var(--font-display); font-weight: 400; font-size: 28px; line-height: 1.1; margin: 2px 0 4px; text-wrap: balance; }
+.chart-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; }
+.fc {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 10px 12px 10px 8px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.fc:hover { border-color: var(--silver-3); }
+.fc.ringing { animation: ring 0.9s ease-out; }
+@keyframes ring { from { border-color: var(--press); box-shadow: 0 0 0 3px color-mix(in srgb, var(--press) 22%, transparent); } }
+.fc-note { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.mini-staff { display: block; }
+.mini-staff .line { stroke: var(--ink); stroke-width: 0.8; }
+.mini-staff .ink { fill: var(--ink); }
+.mini-staff .whole-in { fill: var(--surface); }
+.fc-name { font-weight: 700; font-size: 16px; line-height: 1.1; }
+.fc-other { font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.1; }
+.fc sub { font-size: 0.68em; vertical-align: baseline; position: relative; top: 0.25em; margin-left: 1px; }
+.fc-opts { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.fc-opt { display: flex; flex-direction: column; gap: 1px; }
+.fc-opt + .fc-opt { border-top: 1px dashed var(--line); padding-top: 6px; }
+.fc-opt-name { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 
 .foot { color: var(--muted); font-size: 13px; max-width: 65ch; }
 
